@@ -1,0 +1,45 @@
+#!/usr/bin/bash
+
+source /home//.profile
+cd /home//Schema_Name/Backup
+
+chk=`ls out/`
+if [ "$chk" !=  "" ]; then
+rm out/*
+fi
+
+isql -UUSER_NAME -SSERVER_NAME -PUSER_PASSWORD -Jcp1254 -w1200 -o Schema_NAME_bcpler.sh <<EOF
+select 'bcp Schema_Name.'+rtrim(tname)+' out '+rtrim(tname)+'.bcp -SSERVER_NAME -UUSER_NAME -Jcp1254 -c -t"#~#" -r"#~#\n" -PUSER_PASSWORD  -o out/'+rtrim(tname)+'.out
+tar -cpzf Data/'+rtrim(tname)+'.tar.gz '+rtrim(tname)+'.bcp
+rm -f '+rtrim(tname)+'.bcp
+echo ''Schema_Name Monthly Backup'' | mailx -s '''+rtrim(tname)+' Backed Up'' MAIL_ADRESS'
+from sys.SYSCATALOG
+where creator = 'Schema_Name' and tabletype = 'TABLE' and tname not like 'BIG_VERSION_TABLE_%'
+union
+select
+'bcp Schema_Name.'+rtrim(tname)+' out '+rtrim(tname)+'.bcp -SSERVER_NAME -UUSER_NAME -Jcp1254 -c -t"#~#" -r"#~#\n" -PUSER_PASSWORD  -o out/'+rtrim(tname)+'.out
+tar -cpzf Data/'+rtrim(tname)+'.tar.gz '+rtrim(tname)+'.bcp
+rm -f '+rtrim(tname)+'.bcp
+echo ''Schema_Name Monthly Backup'' | mailx -s '''+rtrim(tname)+' Backed Up'' MAIL_ADRESS'
+from sys.SYSCATALOG
+where creator = 'Schema_Name' and tabletype = 'VIEW' and tname = 'BIG_VERSION_TABLE'
+go
+EOF
+
+chmod +r Schema_NAME_bcpler.sh
+
+cat Schema_NAME_bcpler.sh | grep -v "rtrim" | grep -v "affected" > Schema_NAME_bcpler_2.sh
+
+chmod +r Schema_NAME_bcpler_2.sh
+
+sed '1d' Schema_NAME_bcpler_2.sh > last_Schema_NAME_bcpler.sh
+
+chmod +x last_Schema_NAME_bcpler.sh
+
+last_Schema_NAME_bcpler.sh
+
+rm -f Schema_NAME_bcpler.sh
+
+rm -f Schema_NAME_bcpler_2.sh
+
+rm -f last_Schema_NAME_bcpler.sh

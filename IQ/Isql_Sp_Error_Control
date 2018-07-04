@@ -1,0 +1,20 @@
+#!/usr/bin/bash
+
+source /home/.profile
+
+cd /home/
+
+rm -f out/*
+
+isql -S -U -P -J -o out/Output_File.out<<EOF
+execute STORED_PROCEDURE_NAME
+COMMIT
+GO
+EOF
+chk=`grep 'Msg\|rror\|Message' out/Output_File.out`
+if [ "$chk" !=  "" ]; then 
+`echo 'Error Occured' | mailx -s "Error Occured" MAIL_ADRESS < out/Output_File.out`
+exit
+else 
+`echo 'Job Done' | mailx -s "Job Done" MAIL_ADRESS` 
+fi
